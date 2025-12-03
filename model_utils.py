@@ -6,7 +6,7 @@ import torch
 import vllm
 
 dotenv.load_dotenv()
-TEST_QWEN_MODEL = "Qwen/Qwen3-4B"
+TEST_QWEN_MODEL = "Qwen/Qwen3-4B-Thinking-2507"
 #Just write a fn to use huggingface transformers to load models using the model name, then we can use it 
 #We'll use the deepseek new model for now 
 def load_tokenizer(path):
