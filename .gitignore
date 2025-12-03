@@ -1,0 +1,3 @@
+revenv/
+.env
+.DS_Store
