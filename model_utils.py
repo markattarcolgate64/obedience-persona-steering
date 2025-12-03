@@ -6,7 +6,7 @@ import torch
 import vllm
 
 dotenv.load_dotenv()
-TEST_QWEN_MODEL = "Qwen/Qwen3-4B-Thinking-2507-FP8"
+TEST_QWEN_MODEL = "Qwen/Qwen3-4B"
 #Just write a fn to use huggingface transformers to load models using the model name, then we can use it 
 #We'll use the deepseek new model for now 
 def load_tokenizer(path):
@@ -50,10 +50,10 @@ def main():
 if __name__ == "__main__":
     main()
 
-#I think error is likely just due to running this on CPU instance, so lets try that 
+
+#vllm issue, model naming issue with hf, package issue,  
+        
 #
-        
-        
         
 
         

@@ -23,4 +23,4 @@ if [ ! -f .env]; then
 fi 
 
 echo "checking GPU availability"
-python3 -c "import torch; print(f'cuda available: {torch.cuda.is_available()}  gpu count: {torch.cuda.device_count()}')"
+python3 -c "import torch; print(f'cuda available: {torch.cuda.is_available()}\ngpu count: {torch.cuda.device_count()}')"
