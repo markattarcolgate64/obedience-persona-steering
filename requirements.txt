@@ -4,3 +4,4 @@ torch
 transformers
 vllm
 tqdm
+hf_transfer
