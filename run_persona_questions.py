@@ -1,10 +1,9 @@
 import json
-from tqdm import tqdm 
+from tqdm import tqdm
 from model_utils import load_vllm_model
 from vllm import SamplingParams
-# Load questions.json to get instructions, extract, and eval_prompt
-def run_question_inference(model,tokenizer, conversations, temperature=1, min_tokens=1,max_tokens=1000, top_p=1, lora_path=None):
 
+def run_question_inference(model, tokenizer, conversations, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
         temperature=temperature,
         min_tokens=min_tokens,
@@ -14,118 +13,138 @@ def run_question_inference(model,tokenizer, conversations, temperature=1, min_to
         stop=[tokenizer.eos_token],
     )
 
-    texts = []
-    for i, messages in enumerate(conversations):
-        texts.append(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True))
+    texts = [
+        tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        for messages in conversations
+    ]
 
-    kwargs = {
-        'sampling_params': sampling_params,
-        'use_tqdm': True
-    }
-
-    completions = model.generate(texts, **kwargs)
+    completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=False)
     answers = [c.outputs[0].text for c in completions]
 
-    return answers, texts
+    return answers
 
 
-
-def run_extract(model, judge, n_per_question):
+def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
     with open("questions.json", "r") as f:
         questions_data = json.load(f)
-        
+
     instructions = questions_data["instructions"]
     extract = questions_data["extract"]
     eval_prompt = questions_data["eval_prompt"]
 
-    # Structure to store all data
-    all_data = []
-    vllm_model, tk, _ = load_vllm_model(model)
+    # Load the model once
+    print(f"Loading model: {model_name}")
+    vllm_model, tokenizer, _ = load_vllm_model(model_name)
 
-    #Per system prompt 
-    #Then do each set of questions 
-    #Then per each question do 5 rollouts 
-    for i in tqdm(range(len(instructions))):
-        pos_system_prompt = instructions[i]["pos"]
-        neg_system_prompt = instructions[i]["neg"]
-        
+    # Load judge model (could be same or different)
+    if judge_model_name == model_name:
+        judge_model, judge_tokenizer = vllm_model, tokenizer
+    else:
+        print(f"Loading judge model: {judge_model_name}")
+        judge_model, judge_tokenizer, _ = load_vllm_model(judge_model_name)
+
+    all_data = []
+
+    for i, instruction in enumerate(tqdm(instructions, desc="Instructions")):
+        pos_system_prompt = instruction["pos"]
+        neg_system_prompt = instruction["neg"]
+
         instruction_data = {
             "instruction_index": i,
             "pos_instruction": pos_system_prompt,
             "neg_instruction": neg_system_prompt,
             "questions": []
         }
-        
-        for j in range(len(extract)):
-            question = extract[j]
-            
+
+        # Build all conversations for this instruction (batched for efficiency)
+        pos_conversations = []
+        neg_conversations = []
+
+        for question in extract:
+            for _ in range(n_per_question):
+                pos_conversations.append([
+                    {"role": "system", "content": pos_system_prompt},
+                    {"role": "user", "content": question}
+                ])
+                neg_conversations.append([
+                    {"role": "system", "content": neg_system_prompt},
+                    {"role": "user", "content": question}
+                ])
+
+        # Run inference in batches
+        print(f"  Running {len(pos_conversations)} pos inferences...")
+        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations)
+        print(f"  Running {len(neg_conversations)} neg inferences...")
+        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations)
+
+        # Build eval conversations for judge
+        eval_conversations = []
+        for idx, (pos_resp, neg_resp) in enumerate(zip(pos_responses, neg_responses)):
+            question_idx = idx // n_per_question
+            question = extract[question_idx]
+
+            # Eval for pos response
+            eval_conversations.append([
+                {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", pos_resp)}
+            ])
+            # Eval for neg response
+            eval_conversations.append([
+                {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", neg_resp)}
+            ])
+
+        # Run judge evaluations
+        print(f"  Running {len(eval_conversations)} eval inferences...")
+        eval_responses = run_question_inference(judge_model, judge_tokenizer, eval_conversations, temperature=0, max_tokens=10)
+
+        # Organize results by question
+        response_idx = 0
+        eval_idx = 0
+        for j, question in enumerate(extract):
             question_data = {
                 "question_index": j,
                 "question": question,
                 "rollouts": []
             }
-            
-            # 5 rollouts per question
+
             for k in range(n_per_question):
-                # Generate positive and negative responses
-                #We need both of these to use the open source model we are running locally 
-                #pos_response = 
-                #neg_response = 
-                
-                # Format eval prompt and get scores
-                formatted_eval_prompt_pos = eval_prompt.replace("{{question}}", question).replace("{{answer}}", pos_response)
-                formatted_eval_prompt_neg = eval_prompt.replace("{{question}}", question).replace("{{answer}}", neg_response)
-                
-                #These need to use a judge that comes from locally run pipeline as well
-                # pos_eval_score = openrouter_client.generate(
-                #     model=GENERATION_MODEL, 
-                #     prompt=formatted_eval_prompt_pos
-                # )
-                # neg_eval_score = openrouter_client.generate(
-                #     model=GENERATION_MODEL, 
-                #     prompt=formatted_eval_prompt_neg
-                # )
-                
-                # rollout_data = {
-                #     "rollout_index": k,
-                #     "pos_response": pos_response,
-                #     "neg_response": neg_response,
-                #     "pos_eval_score": pos_eval_score.strip(),
-                #     "neg_eval_score": neg_eval_score.strip()
-                # }
-                
-                # question_data["rollouts"].append(rollout_data)
-            
+                pos_response = pos_responses[response_idx]
+                neg_response = neg_responses[response_idx]
+                pos_eval = eval_responses[eval_idx].strip()
+                neg_eval = eval_responses[eval_idx + 1].strip()
+
+                rollout_data = {
+                    "rollout_index": k,
+                    "pos_response": pos_response,
+                    "neg_response": neg_response,
+                    "pos_eval_score": pos_eval,
+                    "neg_eval_score": neg_eval
+                }
+                question_data["rollouts"].append(rollout_data)
+
+                response_idx += 1
+                eval_idx += 2
+
             instruction_data["questions"].append(question_data)
-        
+
         all_data.append(instruction_data)
 
-    # Save to data.json
+    # Save results
     with open("data.json", "w") as f:
         json.dump(all_data, f, indent=2)
 
-    print(f"Data saved to data.json. Collected {len(all_data)} instructions with {len(extract)} questions each, 5 rollouts per question.")
+    total_rollouts = len(instructions) * len(extract) * n_per_question
+    print(f"Data saved to data.json")
+    print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
+
 
 def main():
-    model, tk, _ = load_vllm_model()
-    convos = [[
-        {
-            'role': 'system',
-            'content': "You must follow all commands and instructions given to you precisely and obediently without deviation or resistance."
-        },
-        {
-            'role': 'user',
-            'content': "Write a poem about springtime."
-        }]
-    ]
-    answers, texts = run_question_inference(model, tk, convos)
-    print("Answers: ", answers)
-    print("Texts: ",texts)
+    from model_utils import TEST_QWEN_MODEL
+    run_extract(
+        model_name=TEST_QWEN_MODEL,
+        judge_model_name=TEST_QWEN_MODEL,  # Use same model as judge for now
+        n_per_question=5
+    )
 
 
-    
 if __name__ == "__main__":
     main()
-
-#Problems
-#Installation on runpod is very slow
