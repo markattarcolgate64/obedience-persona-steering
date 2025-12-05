@@ -27,7 +27,7 @@ def load_model(model_name: str, dtype=torch.bfloat16):
         tk = load_tokenizer(model_name)
         return model, tk 
 
-def load_vllm_model(model_name: str):
+def load_vllm_model(model_name: str = TEST_QWEN_MODEL):
     model = vllm.LLM(
             model=model_name,
             enable_prefix_caching=True,
