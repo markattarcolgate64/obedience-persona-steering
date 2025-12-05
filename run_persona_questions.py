@@ -124,8 +124,8 @@ def main():
 
 
     
-
+if __name__ == "__main__":
+    main()
 
 #Problems
 #Installation on runpod is very slow
-#
