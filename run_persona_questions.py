@@ -119,8 +119,8 @@ def main():
         }]
     ]
     answers, texts = run_question_inference(model, tk, convos)
-    print("Answers: " + answers)
-    print("Texts: " + texts)
+    print("Answers: ", answers)
+    print("Texts: ",texts)
 
 
     
