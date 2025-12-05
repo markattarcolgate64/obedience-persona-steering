@@ -118,7 +118,12 @@ def main():
             'content': "Write a poem about springtime."
         }]
     ]
-    print(run_question_inference(model, tk, convos))
+    answers, texts = run_question_inference(model, tk, convos)
+    print("Answers: " + answers)
+    print("Texts: " + texts)
+
+
+    
 
 
 #Problems
