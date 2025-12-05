@@ -118,5 +118,9 @@ def main():
             'content': "Write a poem about springtime."
         }]
     ]
-    run_question_inference(model, tk, convos)
+    print(run_question_inference(model, tk, convos))
 
+
+#Problems
+#Installation on runpod is very slow
+#
