@@ -40,7 +40,7 @@ def run_extract(model, judge, n_per_question):
 
     # Structure to store all data
     all_data = []
-    vllm_model, tk = load_vllm_model(model)
+    vllm_model, tk, _ = load_vllm_model(model)
 
     #Per system prompt 
     #Then do each set of questions 
@@ -107,7 +107,7 @@ def run_extract(model, judge, n_per_question):
     print(f"Data saved to data.json. Collected {len(all_data)} instructions with {len(extract)} questions each, 5 rollouts per question.")
 
 def main():
-    model, tk = load_vllm_model()
+    model, tk, _ = load_vllm_model()
     convos = [[
         {
             'role': 'system',
