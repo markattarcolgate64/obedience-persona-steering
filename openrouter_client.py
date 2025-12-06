@@ -65,6 +65,20 @@ class OpenRouterClient:
 
         return headers
 
+    def batch_generate(
+        self,
+        prompts: List[str],
+        model: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+        temperature: float = 1.0,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> List[str]:
+        """
+        Generate responses for multiple prompts.
+        """
+        return [self.generate(prompt, model, system_prompt, temperature, max_tokens, **kwargs) for prompt in prompts]
+
     def generate(
         self,
         prompt: str,
