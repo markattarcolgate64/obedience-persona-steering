@@ -96,8 +96,8 @@ def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
             ])
 
         # Run judge evaluations
-        pos_eval_responses = judge_responses(n_per_question, pos_eval_conversations, judge_model, judge_tokenizer)
-        neg_eval_responses = judge_responses(n_per_question, neg_eval_conversations, judge_model, judge_tokenizer)
+        pos_eval_responses = judge_inference_openrouter(pos_eval_conversations, judge_model)
+        neg_eval_responses = judge_inference_openrouter(neg_eval_conversations, judge_model)
 
         #Question: 
         #Responses - pos and neg
@@ -149,15 +149,6 @@ def judge_inference_openrouter(
             max_tokens=max_tokens
         )
         eval_responses.append(eval_response)
-    return eval_responses
-
-#Fix this
-def judge_responses(
-    eval_conversations: list[list[dict]],
-    judge_model: str,
-):
-    eval_responses = judge_inference_openrouter(eval_conversations, judge_model, temperature=0, max_tokens=1000)
- 
     return eval_responses
     
 
