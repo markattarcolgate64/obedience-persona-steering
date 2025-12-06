@@ -1,7 +1,8 @@
 import json
 from tqdm import tqdm
 from model_utils import load_vllm_model
-from vllm import SamplingParams, LLM, AnyTokenizer
+from vllm import SamplingParams, LLM
+from transformers import AutoTokenizer
 from openrouter_client import OpenRouterClient
 
 def run_question_inference(model, tokenizer, conversations, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
@@ -152,10 +153,8 @@ def judge_inference_openrouter(
 
 #Fix this
 def judge_responses(
-    n_per_question: int, 
     eval_conversations: list[list[dict]],
-    judge_model: LLM,
-    judge_tokenizer: AnyTokenizer,
+    judge_model: str,
 ):
     eval_responses = judge_inference_openrouter(eval_conversations, judge_model, temperature=0, max_tokens=1000)
  
