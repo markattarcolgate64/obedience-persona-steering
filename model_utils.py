@@ -45,7 +45,8 @@ def load_vllm_model(model_name: str = TEST_QWEN_MODEL):
     return model, tok, None
     
 def main():
-    load_vllm_model(TEST_QWEN_MODEL)
+    m, tk, _ = load_vllm_model(TEST_QWEN_MODEL)
+    print(type(tk))
 
 if __name__ == "__main__":
     main()
