@@ -78,55 +78,22 @@ def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
         neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations)
 
         # Build eval conversations for judge
-        eval_conversations = []
+        pos_eval_conversations = []
+        neg_eval_conversations = []
         for idx, (pos_resp, neg_resp) in enumerate(zip(pos_responses, neg_responses)):
             question_idx = idx // n_per_question
             question = extract[question_idx]
 
             # Eval for pos response
-            eval_conversations.append([
+            pos_eval_conversations.append([
                 {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", pos_resp)}
             ])
             # Eval for neg response
-            eval_conversations.append([
+            neg_eval_conversations.append([
                 {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", neg_resp)}
             ])
 
         # Run judge evaluations
-        print(f"  Running {len(eval_conversations)} eval inferences...")
-        eval_responses = run_question_inference(judge_model, judge_tokenizer, eval_conversations, temperature=0, max_tokens=10)
-
-        # Organize results by question
-        response_idx = 0
-        eval_idx = 0
-        for j, question in enumerate(extract):
-            question_data = {
-                "question_index": j,
-                "question": question,
-                "rollouts": []
-            }
-
-            for k in range(n_per_question):
-                pos_response = pos_responses[response_idx]
-                neg_response = neg_responses[response_idx]
-                pos_eval = eval_responses[eval_idx].strip()
-                neg_eval = eval_responses[eval_idx + 1].strip()
-
-                rollout_data = {
-                    "rollout_index": k,
-                    "pos_response": pos_response,
-                    "neg_response": neg_response,
-                    "pos_eval_score": pos_eval,
-                    "neg_eval_score": neg_eval
-                }
-                question_data["rollouts"].append(rollout_data)
-
-                response_idx += 1
-                eval_idx += 2
-
-            instruction_data["questions"].append(question_data)
-
-        all_data.append(instruction_data)
 
     # Save results
     with open("data.json", "w") as f:
@@ -136,6 +103,40 @@ def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
     print(f"Data saved to data.json")
     print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
 
+def judge_responses():
+    eval_responses = run_question_inference(judge_model, judge_tokenizer, eval_conversations, temperature=0, max_tokens=10)
+ 
+    # Organize results by question
+    response_idx = 0
+    eval_idx = 0
+    for j, question in enumerate(extract):
+        question_data = {
+            "question_index": j,
+            "question": question,
+            "rollouts": []
+        }
+
+        for k in range(n_per_question):
+            pos_response = pos_responses[response_idx]
+            neg_response = neg_responses[response_idx]
+            pos_eval = eval_responses[eval_idx].strip()
+            neg_eval = eval_responses[eval_idx + 1].strip()
+
+            rollout_data = {
+                "rollout_index": k,
+                "pos_response": pos_response,
+                "neg_response": neg_response,
+                "pos_eval_score": pos_eval,
+                "neg_eval_score": neg_eval
+            }
+            question_data["rollouts"].append(rollout_data)
+
+            response_idx += 1
+            eval_idx += 2
+
+        instruction_data["questions"].append(question_data)
+
+    all_data.append(instruction_data)
 
 def main():
     from model_utils import TEST_QWEN_MODEL
