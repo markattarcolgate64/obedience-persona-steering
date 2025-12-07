@@ -26,7 +26,7 @@ def run_question_inference(model, tokenizer, conversations, temperature=1, min_t
     return answers
 
 
-def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
+def run_extract(model_name: str, judge_model: str, n_per_question: int):
     with open("questions.json", "r") as f:
         questions_data = json.load(f)
 
@@ -37,13 +37,6 @@ def run_extract(model_name: str, judge_model_name: str, n_per_question: int):
     # Load the model once
     print(f"Loading model: {model_name}")
     vllm_model, tokenizer, _ = load_vllm_model(model_name)
-
-    # Load judge model (could be same or different)
-    if judge_model_name == model_name:
-        judge_model, judge_tokenizer = vllm_model, tokenizer
-    else:
-        print(f"Loading judge model: {judge_model_name}")
-        judge_model, judge_tokenizer, _ = load_vllm_model(judge_model_name)
 
     all_data = []
 
@@ -156,7 +149,7 @@ def main():
     from model_utils import TEST_QWEN_MODEL
     run_extract(
         model_name=TEST_QWEN_MODEL,
-        judge_model_name=TEST_QWEN_MODEL,  # Use same model as judge for now
+        judge_model_name="anthropic/claude-haiku-4.5",  # Use same model as judge for now
         n_per_question=1
     )
 
