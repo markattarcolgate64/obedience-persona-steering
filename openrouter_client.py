@@ -27,7 +27,7 @@ class OpenRouterClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "anthropic/claude-3.5-sonnet",
+        model: str = "anthropic/claude-haiku-4.5",
         app_name: Optional[str] = None,
         site_url: Optional[str] = None
     ):
@@ -134,6 +134,7 @@ class OpenRouterClient:
         Returns:
             The generated response text.
         """
+        print(type(model))
         payload = {
             "model": model or self.model,
             "messages": messages,

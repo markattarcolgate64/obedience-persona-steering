@@ -149,7 +149,7 @@ def main():
     from model_utils import TEST_QWEN_MODEL
     run_extract(
         model_name=TEST_QWEN_MODEL,
-        judge_model_name="anthropic/claude-haiku-4.5",  # Use same model as judge for now
+        judge_model="anthropic/claude-haiku-4.5",  # Use same model as judge for now
         n_per_question=1
     )
 
