@@ -47,7 +47,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         pos_system_prompt = instruction["pos"]
         neg_system_prompt = instruction["neg"]
 
-        extract_data = {
+        instruction_data = {
             "instruction_index": i,
             "pos_instruction": pos_system_prompt,
             "neg_instruction": neg_system_prompt,
@@ -68,7 +68,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
                 "pos_eval_scores": [],
                 "neg_eval_scores": []
                 }
-                extract_data["questions"].append(question_data)
+                instruction_data["questions"].append(question_data)
                 #Build positive conversation
                 pos_conversations.append([
                     {"role": "system", "content": pos_system_prompt},
@@ -93,12 +93,12 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         #should be 5 length, very big 
         for i in range(len(pos_responses)):
             #each 5 is question
-            question_data = extract_data["questions"][i]
+            question_data = instruction_data["questions"][i]
             question_data["neg_responses"] = neg_responses[i]
             question_data["pos_responses"] = pos_responses[i]
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
-        print("Question data example\n\n",question_data[0])
+        print("Question data example\n\n",instruction_data["questions"][0])
         break
         return question_data
 
