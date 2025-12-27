@@ -82,9 +82,9 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
 
         # Run inference in batches
         print(f"  Running {len(pos_conversations)} pos inferences...")
-        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
+        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations[0], n_per_question=1)
         print(f"  Running {len(neg_conversations)} neg inferences...")
-        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
+        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations[0], n_per_question=1)
 
         print("Que 1")
         print(extract[0])
