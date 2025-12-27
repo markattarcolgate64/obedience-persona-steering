@@ -91,8 +91,6 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         print(extract[0])
         print("\n\n", "Len:",len(pos_responses[0]))
         #should be 5 length, very big 
-        i = 0 
-        break
         for i in range(len(pos_responses)):
             #each 5 is question
             question_data = extract_data["questions"][i]
@@ -100,8 +98,9 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
             question_data["pos_responses"] = pos_responses[i]
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
-        print()
+        print("Question data example\n\n",question_data[0])
 
+        return question_data
 
 
 def run_eval():
