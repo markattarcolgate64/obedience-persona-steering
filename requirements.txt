@@ -1,6 +1,6 @@
 requests>=2.31.0
 python-dotenv
-transformers>=4.45.0,<4.50.0
+transformers>=4.55.2
 tqdm
 hf_transfer
 vllm==0.11.0
