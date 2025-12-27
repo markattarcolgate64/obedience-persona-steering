@@ -24,7 +24,7 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
     answers = []
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
-        answers.append([c.outputs[1].text for c in completions[i:i+n_per_question]])
+        answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
 
     return answers
 
@@ -90,8 +90,9 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         print("Que 1")
         print(extract[0])
         print(pos_responses[0], "\n", neg_responses[0])
-        #This for some reason is giving the CoT rather than the response 
-        
+        #For CoT models this captures the whole CoT 
+
+
         break
 
         # for i in range(len(extract)):
