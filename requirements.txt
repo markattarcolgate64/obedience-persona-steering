@@ -3,3 +3,4 @@ dotenv
 transformers
 tqdm
 hf_transfer
+vllm
