@@ -90,7 +90,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         print("Que 1")
         print(extract[0])
         print(pos_responses[0], "\n", neg_responses[0])
-
+        break
 
         # for i in range(len(extract)):
         #     question = extract[i]
