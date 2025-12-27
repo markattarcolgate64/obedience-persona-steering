@@ -91,6 +91,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         print(extract[0])
         print(pos_responses[0])
         i = 0 
+        break
         # while i < len(pos_responses):
         #     #each 5 is question
         #     question_data = extract_data["questions"][i]
@@ -100,11 +101,6 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
 
 
 
-
-        # print("\n\n\n-------")
-        # print(pos_responses)
-        # print("============\n\n")
-        # print(neg_responses)
 
         #Should see an array of arrays [[q_resp_1],[q_resp_2]] with n = 1
 
