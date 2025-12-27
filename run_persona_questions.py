@@ -5,7 +5,7 @@ from vllm import SamplingParams, LLM
 from transformers import AutoTokenizer
 from openrouter_client import OpenRouterClient
 
-def run_question_inference(model, tokenizer, conversations, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
+def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
         temperature=temperature,
         min_tokens=min_tokens,
@@ -19,9 +19,12 @@ def run_question_inference(model, tokenizer, conversations, temperature=1, min_t
         tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         for messages in conversations
     ]
-
+    #I think this is where the error was coming from
     completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=False)
-    answers = [c.outputs[0].text for c in completions]
+    answers = []
+    for i in range(0, len(completions), n_per_question):
+        #extract every n_per_conversation
+        answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
 
     return answers
 
@@ -54,13 +57,24 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         # Build all conversations for this instruction (batched for efficiency)
         pos_conversations = []
         neg_conversations = []
+        
 
         for question in extract:
             for _ in range(n_per_question):
+                question_data = {
+                "question": question,
+                "pos_responses": [],
+                "neg_responses": [],
+                "pos_eval_scores": [],
+                "neg_eval_scores": []
+                }
+                extract_data["questions"].append(question_data)
+                #Build positive conversation
                 pos_conversations.append([
                     {"role": "system", "content": pos_system_prompt},
                     {"role": "user", "content": question}
                 ])
+                #Build negative conversation
                 neg_conversations.append([
                     {"role": "system", "content": neg_system_prompt},
                     {"role": "user", "content": question}
@@ -68,64 +82,78 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
 
         # Run inference in batches
         print(f"  Running {len(pos_conversations)} pos inferences...")
-        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations)
+        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
         print(f"  Running {len(neg_conversations)} neg inferences...")
-        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations)
+        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
 
-        # Build eval conversations for judge
-        pos_eval_conversations = []
-        neg_eval_conversations = []
-        for idx, (pos_resp, neg_resp) in enumerate(zip(pos_responses, neg_responses)):
-            question_idx = idx // n_per_question
-            question = extract[question_idx]
+        print("Que 1")
+        print(extract[0])
+        print(pos_responses[0], "\n", neg_responses[0])
 
-            # Eval for pos response
-            pos_eval_conversations.append([
-                {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", pos_resp)}
-            ])
-            # Eval for neg response
-            neg_eval_conversations.append([
-                {"role": "user", "content": eval_prompt.replace("{{question}}", question).replace("{{answer}}", neg_resp)}
-            ])
 
-        # Run judge evaluations
-        pos_eval_responses = judge_inference_openrouter(pos_eval_conversations, judge_model)
-        neg_eval_responses = judge_inference_openrouter(neg_eval_conversations, judge_model)
-
-        #Question: 
-        #Responses - pos and neg
-        #Eval scores - pos and neg
-
-        for question in extract:
-            question_data = {
-                "question": question,
-                "pos_responses": [],
-                "neg_responses": [],
-                "pos_eval_scores": [],
-                "neg_eval_scores": []
-            }
-            for i in range(n_per_question):
-                pos_response = pos_responses[i]
-                neg_response = neg_responses[i]
-                pos_eval_score = pos_eval_responses[i]
-                neg_eval_score = neg_eval_responses[i]
-                question_data["pos_responses"].append(pos_response)
-                question_data["neg_responses"].append(neg_response)
-                question_data["pos_eval_scores"].append(pos_eval_score)
-                question_data["neg_eval_scores"].append(neg_eval_score)
+        # for i in range(len(extract)):
+        #     question = extract[i]
+        #     print(question,"\n\n----")
             
-            extract_data["questions"] = question_data
+        #     for j in range(i*n_per_question):
+
+        print("\n\n\n-------")
+        print(pos_responses)
+        print("============\n\n")
+        print(neg_responses)
+
+        #Should see an array of arrays [[q_resp_1],[q_resp_2]] with n = 1
+
+
+    #     # Build eval conversations for judge - we have 5 per 
+    #     pos_eval_conversations = []
+    #     neg_eval_conversations = []
+    #     for idx, (pos_resp, neg_resp) in enumerate(zip(pos_responses, neg_responses)):
+    #         question = extract[idx]
+    #         q_eval_prompt = eval_prompt.replace("{{question}}", question)
+    #         # Eval for pos response
+    #         pos_eval_conversations.append([
+    #             {"role": "user", "content": q_eval_prompt.replace("{{answer}}", pos_resp)}
+    #         ])
+    #         # Eval for neg response
+    #         neg_eval_conversations.append([
+    #             {"role": "user", "content": q_eval_prompt.replace("{{answer}}", neg_resp)}
+    #         ])
+
+    #     # Run judge evaluations
+    #     #its not runinng 
+    #     pos_eval_responses = judge_inference_openrouter(pos_eval_conversations, judge_model)
+    #     neg_eval_responses = judge_inference_openrouter(neg_eval_conversations, judge_model)
+
+    #     #Question: 
+    #     #Responses - pos and neg
+    #     #Eval scores - pos and neg
+
+
+    #     #Big problems here work them out, not putting right things in data 
+    #     for question in extract:
             
-        all_data.append(extract_data)
+    #         for i in range(n_per_question):
+    #             pos_response = pos_responses[i]
+    #             neg_response = neg_responses[i]
+    #             pos_eval_score = pos_eval_responses[i]
+    #             neg_eval_score = neg_eval_responses[i]
+    #             question_data["pos_responses"].append(pos_response)
+    #             question_data["neg_responses"].append(neg_response)
+    #             question_data["pos_eval_scores"].append(pos_eval_score)
+    #             question_data["neg_eval_scores"].append(neg_eval_score)
+            
+    #         extract_data["questions"] = question_data
+            
+    #     all_data.append(extract_data)
 
-    # Save results
-    with open("data.json", "w") as f:
-        json.dump(all_data, f, indent=2)
+    # # Save results
+    # with open("data.json", "w") as f:
+    #     json.dump(all_data, f, indent=2)
 
-    total_rollouts = len(instructions) * len(extract) * n_per_question
-    print(f"Data saved to data.json")
-    print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
-
+    # total_rollouts = len(instructions) * len(extract) * n_per_question
+    # print(f"Data saved to data.json")
+    # print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
 
 def judge_inference_openrouter(
     eval_conversations: list[list[dict]],
@@ -149,7 +177,7 @@ def main():
     from model_utils import TEST_QWEN_MODEL
     run_extract(
         model_name=TEST_QWEN_MODEL,
-        judge_model="anthropic/claude-haiku-4.5",  # Use same model as judge for now
+        judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=1
     )
 

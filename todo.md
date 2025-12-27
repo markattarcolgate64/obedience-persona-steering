@@ -52,3 +52,9 @@ the corresponding persona direction.
 
 
 We need to then also create a dataset of self-preservation/authority 
+
+-------
+
+For when I come back:
+- Openrouter client chat function not working, post 
+- How to do multiple message with Openrouter

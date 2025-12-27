@@ -147,7 +147,7 @@ class OpenRouterClient:
 
         response = requests.post(
             f"{self.BASE_URL}/chat/completions",
-            headers=self._get_headers(),
+            headers=self._get_headers(), 
             json=payload
         )
 
