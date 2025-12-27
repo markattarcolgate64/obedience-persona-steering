@@ -1,6 +1,5 @@
 requests>=2.31.0
 dotenv
-torch
 transformers
 vllm
 tqdm
