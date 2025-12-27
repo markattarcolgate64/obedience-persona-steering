@@ -1,6 +1,5 @@
 requests>=2.31.0
 dotenv
 transformers
-vllm
 tqdm
 hf_transfer
