@@ -81,25 +81,25 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
                 ])
 
         # Run inference in batches
+        #For CoT models this captures the whole CoT 
         print(f"  Running {len(pos_conversations)} pos inferences...")
-        print(pos_conversations[0], neg_conversations[0])
-        pos_responses = run_question_inference(vllm_model, tokenizer, [pos_conversations[0]], n_per_question=1)
+        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
         print(f"  Running {len(neg_conversations)} neg inferences...")
-        neg_responses = run_question_inference(vllm_model, tokenizer, [neg_conversations[0]], n_per_question=1)
+        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
 
         print("Que 1")
         print(extract[0])
-        print(pos_responses[0], "\n", neg_responses[0])
-        #For CoT models this captures the whole CoT 
+        print(pos_responses[0])
+        i = 0 
+        # while i < len(pos_responses):
+        #     #each 5 is question
+        #     question_data = extract_data["questions"][i]
+        #     for i in range(i, i+n_per_question):
+        #         question_data["neg_responses"].append(neg_responses[i])
+        #         question_data["pos_responses"].append(pos_responses[i])
 
 
-        break
 
-        # for i in range(len(extract)):
-        #     question = extract[i]
-        #     print(question,"\n\n----")
-            
-        #     for j in range(i*n_per_question):
 
         # print("\n\n\n-------")
         # print(pos_responses)
@@ -182,7 +182,7 @@ def main():
     run_extract(
         model_name=TEST_QWEN_MODEL,
         judge_model="anthropic/claude-haiku-4.5",  
-        n_per_question=1
+        n_per_question=5
     )
 
 
