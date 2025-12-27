@@ -99,7 +99,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
         print("Question data example\n\n",question_data[0])
-
+        break
         return question_data
 
 
@@ -179,11 +179,13 @@ def judge_inference_openrouter(
 
 def main():
     from model_utils import TEST_QWEN_MODEL
-    run_extract(
+    question_data = run_extract(
         model_name=TEST_QWEN_MODEL,
         judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=5
     )
+    
+
 
 
 if __name__ == "__main__":
