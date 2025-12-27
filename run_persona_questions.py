@@ -25,8 +25,6 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
         answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
-    print(len(answers[0]))
-    return 0 
 
     return answers
 
@@ -86,14 +84,12 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         #For CoT models this captures the whole CoT 
         print(f"  Running {len(pos_conversations)} pos inferences...")
         pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
-        break
         print(f"  Running {len(neg_conversations)} neg inferences...")
         neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
 
         print("Que 1")
         print(extract[0])
-        print(pos_responses[0])
-        print("\n\n", "Len:",len(pos_responses))
+        print("\n\n", "Len:",len(pos_responses[0]))
         #should be 5 length, very big 
         i = 0 
         break
