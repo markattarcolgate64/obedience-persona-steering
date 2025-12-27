@@ -25,6 +25,8 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
         answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
+    print(len(answers[0]))
+    return 0 
 
     return answers
 
@@ -84,6 +86,7 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         #For CoT models this captures the whole CoT 
         print(f"  Running {len(pos_conversations)} pos inferences...")
         pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
+        break
         print(f"  Running {len(neg_conversations)} neg inferences...")
         neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
 
@@ -91,17 +94,22 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         print(extract[0])
         print(pos_responses[0])
         print("\n\n", "Len:",len(pos_responses))
+        #should be 5 length, very big 
         i = 0 
         break
-        # while i < len(pos_responses):
-        #     #each 5 is question
-        #     question_data = extract_data["questions"][i]
-        #     for i in range(i, i+n_per_question):
-        #         question_data["neg_responses"].append(neg_responses[i])
-        #         question_data["pos_responses"].append(pos_responses[i])
+        for i in range(len(pos_responses)):
+            #each 5 is question
+            question_data = extract_data["questions"][i]
+            question_data["neg_responses"] = neg_responses[i]
+            question_data["pos_responses"] = pos_responses[i]
+        
+        #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
+        print()
 
 
 
+def run_eval():
+    pass
 
         #Should see an array of arrays [[q_resp_1],[q_resp_2]] with n = 1
 
