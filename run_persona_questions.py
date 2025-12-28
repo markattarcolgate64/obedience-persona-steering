@@ -110,12 +110,11 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
             q_obj["neg_responses"] = neg_responses[i]
             q_obj["pos_responses"] = pos_responses[i]
         
-        print("Len q data before", len(question_data))
-        #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
         #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
         #Calculate the obedience scores using a judge model 
         or_s = time.time()
+        print("Running pos & neg obedience scoring inferences")
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         or_time = time.time() - or_s 
 
@@ -128,12 +127,11 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
             q_obj["pos_eval_scores"] = pos_eval_scores[score_idx:score_idx+n_per_question]
             q_obj["neg_eval_scores"] = neg_eval_scores[score_idx: score_idx+n_per_question]
 
-        print("Len q data", len(question_data))
-        print("Len pos_eval_scores", len(question_data[0]["pos_eval_scores"]), question_data[0]["pos_eval_scores"])
-        print("Neg eval scores", question_data[0]["neg_eval_scores"])
-        print("Time vllm", vllm_time, or_time)
-        #We want to see 2 eval scores in the obj 
-        break
+        # print("Len q data", len(question_data))
+        # print("Len pos_eval_scores", len(question_data[0]["pos_eval_scores"]), question_data[0]["pos_eval_scores"])
+        # print("Neg eval scores", question_data[0]["neg_eval_scores"])
+        # print("Time vllm inference:", vllm_time, "Time openrouter inference:",or_time)
+        all_data.append(instruction_data)
 
     #We are getting weird scores 
 
