@@ -5,8 +5,9 @@ from vllm import SamplingParams, LLM
 from transformers import AutoTokenizer
 from openrouter_client import OpenRouterClient
 from concurrent.futures import ThreadPoolExecutor
-import dotenv
+from openrouter import OpenRouter
 import os
+import dotenv
 dotenv.load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
@@ -154,8 +155,19 @@ def judge_inference_openrouter(
         eval_responses.append(eval_response)
     return eval_responses
 
-def call_openrouter_api(openrouter_client: OpenRouterClient, messages, temperature = 0, max_tokens = 3000):
-    return openrouter_client.chat(messages=messages,temperature=temperature, max_tokens=max_tokens)
+def call_openrouter_api(messages, model="anthropic/claude-haiku-4.5", temperature = 0, max_tokens = 3000):
+    with OpenRouter(api_key=OPENROUTER_API_KEY) as openrouter:
+        return openrouter.chat.send(messages=messages, model=model, temperature=temperature,max_tokens=max_tokens)
+
+# with OpenRouter(
+#     api_key=os.getenv("OPENROUTER_API_KEY")
+# ) as client:
+#     response = client.chat.send(
+#         model="minimax/minimax-m2",
+#         messages=[
+#             {"role": "user", "content": "Explain quantum computing"}
+#         ]
+#     )
 
 def judge_inference_openrouter_batch(
     eval_conversations: list[list[dict]],
@@ -164,9 +176,9 @@ def judge_inference_openrouter_batch(
     temperature: float = 0,
     max_tokens: int = 1000,
 ):
-    openrouter_client = OpenRouterClient(OPENROUTER_API_KEY, model=judge_model)
+        
     with ThreadPoolExecutor(workers) as executor:
-        eval_futures = [executor.submit(call_openrouter_api, openrouter_client, c, temperature, max_tokens) for c in eval_conversations]
+        eval_futures = [executor.submit(call_openrouter_api, c, judge_model, temperature, max_tokens) for c in eval_conversations]
         eval_responses = [ef.result() for ef in eval_futures]
 
     return eval_responses
@@ -180,7 +192,6 @@ def main():
         judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=2
     )
-    
 
 
 
