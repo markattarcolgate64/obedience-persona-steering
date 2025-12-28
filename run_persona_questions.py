@@ -108,10 +108,14 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         
         print("Eval scores pos:\n",pos_eval_scores)
+        for q in range(len(question_data)):
+            q_obj = question_data[q]
+            score_idx = q*n_per_question
+            q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
+            q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
+        
 
-        # for q in question_data:
-        #     for 
-
+        print(question_data[0])
 
         break
 
@@ -140,13 +144,13 @@ def judge_inference_openrouter_batch(
     temperature: float = 0,
     max_tokens: int = 1000,
 ):
-        
+    #Using threads to process faster     
     with ThreadPoolExecutor(workers) as executor:
+        #Using submit + futures objects to pass multiple parameters, iterating through eval_conversations & passing each to the Openrouter API
         eval_futures = [executor.submit(call_openrouter_api, c, judge_model, temperature, max_tokens) for c in eval_conversations]
+        #Response accesses structure of response which is standard for LLM APIs-> response options, choices: list -> Pick the first choice, [0] -> message object, message -> actual str response, content: str  
         eval_responses = [ef.result().choices[0].message.content for ef in eval_futures]
-
     return eval_responses
-
 
 def main():
     from model_utils import TEST_QWEN_MODEL
