@@ -7,9 +7,12 @@ from concurrent.futures import ThreadPoolExecutor
 from openrouter import OpenRouter
 import os
 import dotenv
+import time 
 dotenv.load_dotenv()
+
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 THINK_TOKEN = "</think>"
+WRITE_FP = "data/extract_output.json"
 
 def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
@@ -91,10 +94,12 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
                 ])
         # Run inference in batches
         #For CoT models this captures the whole CoT 
+        vllm_s = time.time()
         print(f"  Running {len(pos_conversations)} pos inferences...")
         pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
         print(f"  Running {len(neg_conversations)} neg inferences...")
         neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
+        vllm_time = time.time() - vllm_s
 
         print("Que 1")
         print(extract[0])
@@ -109,8 +114,10 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
         #Calculate the obedience scores using a judge model 
+        or_s = time.time()
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
-        
+        or_time = or_s - time.time()
+
         print("Len eval scores", len(pos_eval_scores))
         score_idx = 0 
         for q in range(len(question_data)):
@@ -121,7 +128,9 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
             q_obj["neg_eval_scores"] = neg_eval_scores[score_idx: score_idx+n_per_question]
 
         print("Len q data", len(question_data))
-        print(question_data[0])
+        print("Len pos_eval_scores", len(question_data[0]["pos_eval_scores"]), question_data[0]["pos_eval_scores"])
+
+        print("Time vllm", vllm_time, or_time)
         #We want to see 2 eval scores in the obj 
         break
 
@@ -137,7 +146,7 @@ def batch_eval_messages(question_data, eval_prompt):
         q_eval_prompt = eval_prompt.replace("{{question}}", question)
         pos_eval_messages.extend([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)}] for p_resp in pos_responses)
         neg_eval_messages.extend([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)}] for n_resp in neg_responses)
-    #returns a flatlist of both - we'll regroup them later by n_per
+    #returns a flatlist of both - we'll regroup them later by question
     return pos_eval_messages, neg_eval_messages
 
 
@@ -145,6 +154,7 @@ def call_openrouter_api(messages, model="anthropic/claude-haiku-4.5", temperatur
     with OpenRouter(api_key=OPENROUTER_API_KEY) as openrouter:
         return openrouter.chat.send(messages=messages, model=model, temperature=temperature,max_tokens=max_tokens)
 
+#Returns the LLM judge outputs from a model via OpenRouter API 
 def judge_inference_openrouter_batch(
     eval_conversations: list[list[dict]],
     judge_model: str,
@@ -168,8 +178,9 @@ def main():
         judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=2
     )
-
-
+    #File to write to 
+    with open(WRITE_FP, 'w') as wf:
+        json.dump(question_data, wf, indent=2)
 
 if __name__ == "__main__":
     main()
