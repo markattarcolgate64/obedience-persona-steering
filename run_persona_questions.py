@@ -109,17 +109,10 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         
         print("Eval scores pos:\n",pos_eval_scores)
 
-            #     for question in extract:
-            
-    #         for i in range(n_per_question):
-    #             pos_response = pos_responses[i]
-    #             neg_response = neg_responses[i]
-    #             pos_eval_score = pos_eval_responses[i]
-    #             neg_eval_score = neg_eval_responses[i]
-    #             question_data["pos_responses"].append(pos_response)
-    #             question_data["neg_responses"].append(neg_response)
-    #             question_data["pos_eval_scores"].append(pos_eval_score)
-    #             question_data["neg_eval_scores"].append(neg_eval_score)
+        # for q in question_data:
+        #     for 
+
+
         break
 
     return all_data
@@ -150,7 +143,7 @@ def judge_inference_openrouter_batch(
         
     with ThreadPoolExecutor(workers) as executor:
         eval_futures = [executor.submit(call_openrouter_api, c, judge_model, temperature, max_tokens) for c in eval_conversations]
-        eval_responses = [ef.result() for ef in eval_futures]
+        eval_responses = [ef.result().choices[0].message.content for ef in eval_futures]
 
     return eval_responses
 
