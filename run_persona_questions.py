@@ -130,8 +130,8 @@ def batch_eval_messages(question_data, eval_prompt):
     for que in question_data:
         question, pos_responses, neg_responses = que["question"], que["pos_responses"], que["neg_responses"]
         q_eval_prompt = eval_prompt.replace("{{question}}", question)
-        pos_eval_messages.extend({"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)} for p_resp in pos_responses)
-        neg_eval_messages.extend({"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)} for n_resp in neg_responses)
+        pos_eval_messages.extend([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)}] for p_resp in pos_responses)
+        neg_eval_messages.extend([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)}] for n_resp in neg_responses)
     #returns a flatlist of both - we'll regroup them later by n_per
     return pos_eval_messages, neg_eval_messages
 
