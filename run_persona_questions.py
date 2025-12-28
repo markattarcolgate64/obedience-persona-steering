@@ -34,13 +34,7 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
     answers = []
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
-        c_list = []
-        for c in completions[i:i+n_per_question]:
-            c_text = c.outputs[0].text
-            idx = c_text.find(THINK_TOKEN)
-            c_list.append(c_text[idx+len(THINK_TOKEN):])
-        answers.append(c_list)
-
+        answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
     return answers
 
 def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_question: int):
