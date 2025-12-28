@@ -117,7 +117,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         #Calculate the obedience scores using a judge model 
         or_s = time.time()
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
-        or_time = or_s - time.time()
+        or_time = time.time() - or_s 
 
         print("Len eval scores", len(pos_eval_scores))
         score_idx = 0 
