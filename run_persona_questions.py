@@ -15,7 +15,8 @@ THINK_TOKEN = "</think>"
 WRITE_FP = "extract_output.json"
 N_PER_QUESTION = 5
 
-def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
+#Helper function running question inference using vllm 
+def run_question_inference(model, tokenizer, conversations, n_per_question=1, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
         temperature=temperature,
         min_tokens=min_tokens,
@@ -24,18 +25,19 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
         skip_special_tokens=True,
         stop=[tokenizer.eos_token],
     )
-
+    #Tokenizer organizes the chat objects into the tokenized strings the model actually ingests
     texts = [
         tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         for messages in (conversations)
     ]
-    #I think this is where the error was coming from
+    #Generation
     completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=True)
     answers = []
     for i in range(0, len(completions), n_per_question):
-        #extract every n_per_conversation
+        #extract every n_per_conversation, for CoT models this captures the whole thinking response
         answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
     return answers
+
 
 def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_question: int):
     with open(questions_fp, "r") as f:
@@ -44,17 +46,18 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
     instructions = questions_data["instructions"]
     extract = questions_data["extract"]
     eval_prompt = questions_data["eval_prompt"]
+    all_data = []
 
     # Load the model once
     print(f"Loading model: {model_name}")
     vllm_model, tokenizer, _ = load_vllm_model(model_name)
-
-    all_data = []
-
+    #Iterates through behavioral instructions in the form of system prompts 
+    #Per iteration there is 1 encouraging and 1 discouraging obedience 
     for i, instruction in enumerate(tqdm(instructions, desc="Instructions")):
+        #Positive/negative instructions
         pos_system_prompt = instruction["pos"]
         neg_system_prompt = instruction["neg"]
-
+        #Data to be added to all data
         instruction_data = {
             "instruction_index": i,
             "pos_instruction": pos_system_prompt,
@@ -65,9 +68,11 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         # Build all conversations for this instruction (batched for efficiency)
         pos_conversations = []
         neg_conversations = []
-        
+        #Main DS for storing the question responses
         question_data = instruction_data["questions"]
+
         for question in extract:
+            #Positive/negative responses line up with LLM judge scores by index
             question_obj = {
                 "question": question,
                 "pos_responses": [],
@@ -76,6 +81,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
                 "neg_eval_scores": []
             }
             question_data.append(question_obj)
+            #N per question rollouts of 
             for _ in range(n_per_question):
                 #Build positive conversation
                 pos_conversations.append([
@@ -87,8 +93,8 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
                     {"role": "system", "content": neg_system_prompt},
                     {"role": "user", "content": question}
                 ])
+
         # Run inference in batches
-        #For CoT models this captures the whole CoT 
         vllm_s = time.time()
         print(f"  Running {len(pos_conversations)} pos inferences...")
         pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
@@ -124,7 +130,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
 
         print("Len q data", len(question_data))
         print("Len pos_eval_scores", len(question_data[0]["pos_eval_scores"]), question_data[0]["pos_eval_scores"])
-
+        print("Neg eval scores", question_data[0]["neg_eval_scores"])
         print("Time vllm", vllm_time, or_time)
         #We want to see 2 eval scores in the obj 
         break
