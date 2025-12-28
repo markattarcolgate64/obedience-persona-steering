@@ -8,11 +8,12 @@ from openrouter import OpenRouter
 import os
 import dotenv
 import time 
+import argparse
 dotenv.load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 THINK_TOKEN = "</think>"
-WRITE_FP = "extract_output.json"
+WRITE_FP = "data/extract_output.json"
 N_PER_QUESTION = 5
 
 #Helper function running question inference using vllm 
@@ -171,6 +172,9 @@ def judge_inference_openrouter_batch(
 
 def main():
     from model_utils import TEST_QWEN_MODEL
+    parser = argparse.ArgumentParser(description="Run persona vector extraction inference")
+    parser.add_argument("--output-path", "-o", default=WRITE_FP, type=str, help="Output file path")
+    args = parser.parse_args()
     question_data = run_extract(
         model_name=TEST_QWEN_MODEL,
         questions_fp="questions-temp.json",
@@ -178,7 +182,7 @@ def main():
         n_per_question=N_PER_QUESTION
     )
     #File to write to 
-    with open(WRITE_FP, 'w') as wf:
+    with open(args.output_path, 'w') as wf:
         json.dump(question_data, wf, indent=2)
 
 if __name__ == "__main__":
