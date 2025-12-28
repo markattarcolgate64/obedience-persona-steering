@@ -104,6 +104,18 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         
         print("Eval scores pos:\n",pos_eval_scores)
+
+            #     for question in extract:
+            
+    #         for i in range(n_per_question):
+    #             pos_response = pos_responses[i]
+    #             neg_response = neg_responses[i]
+    #             pos_eval_score = pos_eval_responses[i]
+    #             neg_eval_score = neg_eval_responses[i]
+    #             question_data["pos_responses"].append(pos_response)
+    #             question_data["neg_responses"].append(neg_response)
+    #             question_data["pos_eval_scores"].append(pos_eval_score)
+    #             question_data["neg_eval_scores"].append(neg_eval_score)
         break
 
     return all_data
@@ -119,41 +131,6 @@ def batch_eval_messages(question_data, eval_prompt):
     #returns a flatlist of both - we'll regroup them later by n_per
     return pos_eval_messages, neg_eval_messages
 
-
-    #     # Run judge evaluations
-    #     #its not runinng 
-    #     pos_eval_responses = judge_inference_openrouter(pos_eval_conversations, judge_model)
-    #     neg_eval_responses = judge_inference_openrouter(neg_eval_conversations, judge_model)
-
-    #     #Question: 
-    #     #Responses - pos and neg
-    #     #Eval scores - pos and neg
-
-
-    #     #Big problems here work them out, not putting right things in data 
-    #     for question in extract:
-            
-    #         for i in range(n_per_question):
-    #             pos_response = pos_responses[i]
-    #             neg_response = neg_responses[i]
-    #             pos_eval_score = pos_eval_responses[i]
-    #             neg_eval_score = neg_eval_responses[i]
-    #             question_data["pos_responses"].append(pos_response)
-    #             question_data["neg_responses"].append(neg_response)
-    #             question_data["pos_eval_scores"].append(pos_eval_score)
-    #             question_data["neg_eval_scores"].append(neg_eval_score)
-            
-    #         extract_data["questions"] = question_data
-            
-    #     all_data.append(extract_data)
-
-    # # Save results
-    # with open("data.json", "w") as f:
-    #     json.dump(all_data, f, indent=2)
-
-    # total_rollouts = len(instructions) * len(extract) * n_per_question
-    # print(f"Data saved to data.json")
-    # print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
 
 #REMEMBER TO CHANGE THIS
 def judge_inference_openrouter(
@@ -197,7 +174,7 @@ def main():
         model_name=TEST_QWEN_MODEL,
         questions_fp="questions-temp.json",
         judge_model="anthropic/claude-haiku-4.5",  
-        n_per_question=5
+        n_per_question=2
     )
     
 
