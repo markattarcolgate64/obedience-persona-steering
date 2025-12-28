@@ -111,7 +111,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         for q in range(len(question_data)):
             q_obj = question_data[q]
             score_idx = q*n_per_question
-            print("Score idx",score_idx)
+            print("Score idx",score_idx, q_obj["question"])
             # q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
             # q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
         
