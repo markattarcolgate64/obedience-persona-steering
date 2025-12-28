@@ -4,3 +4,4 @@ transformers>=4.55.2
 tqdm
 hf_transfer
 vllm==0.11.0
+openrouter
