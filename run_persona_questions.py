@@ -28,7 +28,6 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
 
     return answers
 
-
 def run_extract(model_name: str, judge_model: str, n_per_question: int):
     with open("questions.json", "r") as f:
         questions_data = json.load(f)
@@ -79,7 +78,6 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
                     {"role": "system", "content": neg_system_prompt},
                     {"role": "user", "content": question}
                 ])
-
         # Run inference in batches
         #For CoT models this captures the whole CoT 
         print(f"  Running {len(pos_conversations)} pos inferences...")
