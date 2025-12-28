@@ -100,6 +100,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
             i_question_data["neg_responses"] = neg_responses[i]
             i_question_data["pos_responses"] = pos_responses[i]
         
+        print("Len q data before", len(question_data))
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
         question_data = instruction_data["questions"]
         #Batch the messages to send to Openrouter API for evaluation
@@ -108,6 +109,8 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         
         print("Len eval scores", len(pos_eval_scores))
+        print("Len q data", len(question_data))
+
         for q in range(len(question_data)):
             q_obj = question_data[q]
             score_idx = q*n_per_question
