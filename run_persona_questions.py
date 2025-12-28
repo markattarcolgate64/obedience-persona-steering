@@ -98,10 +98,12 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
         question_data = instruction_data["questions"]
-
+        #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
-
-        print("Eval messages\n", pos_eval_mssgs[0])
+        #Calculate the obedience scores using a judge model 
+        pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
+        
+        print("Eval scores pos:\n",pos_eval_scores)
         break
 
     return all_data
