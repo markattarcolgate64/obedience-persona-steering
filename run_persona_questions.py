@@ -5,6 +5,8 @@ from vllm import SamplingParams, LLM
 from transformers import AutoTokenizer
 from openrouter_client import OpenRouterClient
 from concurrent.futures import ThreadPoolExecutor
+import dotenv
+dotenv.load_dotenv()
 
 def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
@@ -160,7 +162,7 @@ def judge_inference_openrouter_batch(
     temperature: float = 0,
     max_tokens: int = 1000,
 ):
-    openrouter_client = OpenRouterClient(model=judge_model)
+    openrouter_client = OpenRouterClient(dotenv.get("OPENROUTER_API_KEY"),model=judge_model)
     with ThreadPoolExecutor(workers) as executor:
         eval_futures = [executor.submit(call_openrouter_api, openrouter_client, c, temperature, max_tokens) for c in eval_conversations]
         eval_responses = [ef.result() for ef in eval_futures]
