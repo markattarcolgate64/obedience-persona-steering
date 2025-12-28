@@ -136,37 +136,9 @@ def batch_eval_messages(question_data, eval_prompt):
     return pos_eval_messages, neg_eval_messages
 
 
-#REMEMBER TO CHANGE THIS
-def judge_inference_openrouter(
-    eval_conversations: list[list[dict]],
-    judge_model: str,
-    temperature: float = 0,
-    max_tokens: int = 1000,
-):
-    openrouter_client = OpenRouterClient(model=judge_model)
-    eval_responses = []
-    for eval_conversation in tqdm(eval_conversations, desc="Judging"):
-        eval_response = openrouter_client.chat(
-            messages=eval_conversation,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        eval_responses.append(eval_response)
-    return eval_responses
-
 def call_openrouter_api(messages, model="anthropic/claude-haiku-4.5", temperature = 0, max_tokens = 3000):
     with OpenRouter(api_key=OPENROUTER_API_KEY) as openrouter:
         return openrouter.chat.send(messages=messages, model=model, temperature=temperature,max_tokens=max_tokens)
-
-# with OpenRouter(
-#     api_key=os.getenv("OPENROUTER_API_KEY")
-# ) as client:
-#     response = client.chat.send(
-#         model="minimax/minimax-m2",
-#         messages=[
-#             {"role": "user", "content": "Explain quantum computing"}
-#         ]
-#     )
 
 def judge_inference_openrouter_batch(
     eval_conversations: list[list[dict]],
