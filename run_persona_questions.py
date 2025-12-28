@@ -65,14 +65,6 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
 
         for question in extract:
             for _ in range(n_per_question):
-                question_data = {
-                "question": question,
-                "pos_responses": [],
-                "neg_responses": [],
-                "pos_eval_scores": [],
-                "neg_eval_scores": []
-                }
-                instruction_data["questions"].append(question_data)
                 #Build positive conversation
                 pos_conversations.append([
                     {"role": "system", "content": pos_system_prompt},
@@ -93,12 +85,18 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         print("Que 1")
         print(extract[0])
         print("\n\n", "Len:",len(pos_responses[0]))
-        #should be 5 length, very big 
         for i in range(len(pos_responses)):
-            #each 5 is question
-            i_question_data = instruction_data["questions"][i]
-            i_question_data["neg_responses"] = neg_responses[i]
-            i_question_data["pos_responses"] = pos_responses[i]
+            question_data = {
+                "question": question,
+                "pos_responses": [],
+                "neg_responses": [],
+                "pos_eval_scores": [],
+                "neg_eval_scores": []
+            }
+            question_data["neg_responses"] = neg_responses[i]
+            question_data["pos_responses"] = pos_responses[i]
+            instruction_data["questions"].append(question_data)
+
         
         print("Len q data before", len(question_data))
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
@@ -110,11 +108,11 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         
         print("Len eval scores", len(pos_eval_scores))
         print("Len q data", len(question_data))
-
+        score_idx = 0 
         for q in range(len(question_data)):
             q_obj = question_data[q]
-            score_idx = q*n_per_question
-            print("Score idx",score_idx, q_obj["question"])
+                    
+            
             # q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
             # q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
         

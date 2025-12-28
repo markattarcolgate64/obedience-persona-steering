@@ -21,7 +21,7 @@ def load_model(model_name: str, dtype=torch.bfloat16):
     if not os.path.exists(model_name):
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=dtype,
+            dtype=dtype,
             device_map="auto"
         )
         tk = load_tokenizer(model_name)
