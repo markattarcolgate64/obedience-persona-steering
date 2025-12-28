@@ -12,7 +12,8 @@ dotenv.load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 THINK_TOKEN = "</think>"
-WRITE_FP = "data/extract_output.json"
+WRITE_FP = "extract_output.json"
+N_PER_QUESTION = 5
 
 def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
@@ -176,7 +177,7 @@ def main():
         model_name=TEST_QWEN_MODEL,
         questions_fp="questions-temp.json",
         judge_model="anthropic/claude-haiku-4.5",  
-        n_per_question=2
+        n_per_question=N_PER_QUESTION
     )
     #File to write to 
     with open(WRITE_FP, 'w') as wf:
