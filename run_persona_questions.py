@@ -106,14 +106,16 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         
         print("Len eval scores", len(pos_eval_scores))
-        print("Len q data", len(question_data))
         score_idx = 0 
         for q in range(len(question_data)):
             q_obj = question_data[q]
-            q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
-            q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
-        
-        #print(question_data[0])
+            score_idx = n_per_question * q
+            print(score_idx)
+            q_obj["pos_eval_scores"] = pos_eval_scores[score_idx:score_idx+n_per_question]
+            q_obj["neg_eval_scores"] = neg_eval_scores[score_idx: score_idx+n_per_question]
+
+        print("Len q data", len(question_data))
+        print(question_data[0])
         break
     #     all_data.append(question_data)
 
