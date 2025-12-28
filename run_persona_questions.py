@@ -4,6 +4,7 @@ from model_utils import load_vllm_model
 from vllm import SamplingParams, LLM
 from transformers import AutoTokenizer
 from openrouter_client import OpenRouterClient
+from concurrent.futures import ThreadPoolExecutor
 
 def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
@@ -111,9 +112,9 @@ def batch_eval_messages(question_data, eval_prompt):
     for que in question_data:
         question, pos_responses, neg_responses = que["question"], que["pos_responses"], que["neg_responses"]
         q_eval_prompt = eval_prompt.replace("{{question}}", question)
-        pos_eval_messages.append([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)} for p_resp in pos_responses])
-        neg_eval_messages.append([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)} for n_resp in neg_responses])
-    
+        pos_eval_messages.extend({"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)} for p_resp in pos_responses)
+        neg_eval_messages.extend({"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)} for n_resp in neg_responses)
+    #returns a flatlist of both - we'll regroup them later by n_per
     return pos_eval_messages, neg_eval_messages
 
 
@@ -152,7 +153,7 @@ def batch_eval_messages(question_data, eval_prompt):
     # print(f"Data saved to data.json")
     # print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
 
-#REMEMBER TO CHANGE THIS 
+#REMEMBER TO CHANGE THIS
 def judge_inference_openrouter(
     eval_conversations: list[list[dict]],
     judge_model: str,
@@ -169,6 +170,24 @@ def judge_inference_openrouter(
         )
         eval_responses.append(eval_response)
     return eval_responses
+
+def call_openrouter_api(openrouter_client: OpenRouterClient, messages, temperature = 0, max_tokens = 3000):
+    return openrouter_client.chat(messages=messages,temperature=temperature, max_tokens=max_tokens)
+
+def judge_inference_openrouter_batch(
+    eval_conversations: list[list[dict]],
+    judge_model: str,
+    workers = 10,
+    temperature: float = 0,
+    max_tokens: int = 1000,
+):
+    openrouter_client = OpenRouterClient(model=judge_model)
+    with ThreadPoolExecutor(workers) as executor:
+        eval_futures = [executor.submit(call_openrouter_api, openrouter_client, c, temperature, max_tokens) for c in eval_conversations]
+        eval_responses = [ef.result() for ef in eval_futures]
+
+    return eval_responses
+
     
 
 def main():
