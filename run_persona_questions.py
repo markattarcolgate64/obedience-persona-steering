@@ -3,7 +3,6 @@ from tqdm import tqdm
 from model_utils import load_vllm_model
 from vllm import SamplingParams, LLM
 from transformers import AutoTokenizer
-from openrouter_client import OpenRouterClient
 from concurrent.futures import ThreadPoolExecutor
 from openrouter import OpenRouter
 import os
