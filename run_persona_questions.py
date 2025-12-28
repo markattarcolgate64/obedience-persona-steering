@@ -29,8 +29,8 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
 
     return answers
 
-def run_extract(model_name: str, judge_model: str, n_per_question: int):
-    with open("questions.json", "r") as f:
+def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_question: int):
+    with open(questions_fp, "r") as f:
         questions_data = json.load(f)
 
     instructions = questions_data["instructions"]
@@ -188,12 +188,12 @@ def judge_inference_openrouter_batch(
 
     return eval_responses
 
-    
 
 def main():
     from model_utils import TEST_QWEN_MODEL
     question_data = run_extract(
         model_name=TEST_QWEN_MODEL,
+        questions_fp="questions-temp.json",
         judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=5
     )
