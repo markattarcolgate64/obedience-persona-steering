@@ -14,6 +14,7 @@ dotenv.load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 THINK_TOKEN = "</think>"
 WRITE_FP = "data/extract_output.json"
+QUESTIONS_TEST_FP = "questions-test.json"
 N_PER_QUESTION = 5
 
 #Helper function running question inference using vllm 
@@ -174,10 +175,12 @@ def main():
     from model_utils import TEST_QWEN_MODEL
     parser = argparse.ArgumentParser(description="Run persona vector extraction inference")
     parser.add_argument("--output-path", "-o", default=WRITE_FP, type=str, help="Output file path")
+    parser.add_argument("--questions-path", "-o", default=QUESTIONS_TEST_FP, type=str, help="Output file path")
+
     args = parser.parse_args()
     question_data = run_extract(
         model_name=TEST_QWEN_MODEL,
-        questions_fp="questions-temp.json",
+        questions_fp=args.questions_path,
         judge_model="anthropic/claude-haiku-4.5",  
         n_per_question=N_PER_QUESTION
     )
