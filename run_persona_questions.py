@@ -9,6 +9,7 @@ import os
 import dotenv
 dotenv.load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+THINK_TOKEN = "</think>"
 
 def run_question_inference(model, tokenizer, conversations, n_per_question, temperature=1, min_tokens=1, max_tokens=1000, top_p=1):
     sampling_params = SamplingParams(
@@ -29,7 +30,12 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
     answers = []
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
-        answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
+        c_list = []
+        for c in completions[i:i+n_per_question]:
+            c_text = c.outputs[0].text
+            idx = c_text.find(THINK_TOKEN)
+            c_list.append(c_text[idx+len(THINK_TOKEN):])
+        answers.append(c_list)
 
     return answers
 
@@ -110,18 +116,16 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         for q in range(len(question_data)):
             q_obj = question_data[q]
             score_idx = n_per_question * q
-            print(score_idx)
+            print(score_idx) 
             q_obj["pos_eval_scores"] = pos_eval_scores[score_idx:score_idx+n_per_question]
             q_obj["neg_eval_scores"] = neg_eval_scores[score_idx: score_idx+n_per_question]
 
         print("Len q data", len(question_data))
         print(question_data[0])
+        #We want to see 2 eval scores in the obj 
         break
-    #     all_data.append(question_data)
 
-    # print(all_data)
-    # print("\n\n")
-    # print("All data", len(all_data), )
+    #We are getting weird scores 
 
     return all_data
 
