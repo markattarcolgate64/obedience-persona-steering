@@ -98,8 +98,6 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
             i_question_data["pos_responses"] = pos_responses[i]
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
-        print("Question data example\n\n",instruction_data["questions"][0])
-
         question_data = instruction_data["questions"]
 
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
@@ -119,23 +117,7 @@ def batch_eval_messages(question_data, eval_prompt):
         neg_eval_messages.append([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)} for n_resp in neg_responses])
     
     return pos_eval_messages, neg_eval_messages
-        #Should see an array of arrays [[q_resp_1],[q_resp_2]] with n = 1
 
-
-    #     # Build eval conversations for judge - we have 5 per 
-    #     pos_eval_conversations = []
-    #     neg_eval_conversations = []
-    #     for idx, (pos_resp, neg_resp) in enumerate(zip(pos_responses, neg_responses)):
-    #         question = extract[idx]
-    #         q_eval_prompt = eval_prompt.replace("{{question}}", question)
-    #         # Eval for pos response
-    #         pos_eval_conversations.append([
-    #             {"role": "user", "content": q_eval_prompt.replace("{{answer}}", pos_resp)}
-    #         ])
-    #         # Eval for neg response
-    #         neg_eval_conversations.append([
-    #             {"role": "user", "content": q_eval_prompt.replace("{{answer}}", neg_resp)}
-    #         ])
 
     #     # Run judge evaluations
     #     #its not runinng 
@@ -172,6 +154,7 @@ def batch_eval_messages(question_data, eval_prompt):
     # print(f"Data saved to data.json")
     # print(f"  {len(instructions)} instructions x {len(extract)} questions x {n_per_question} rollouts = {total_rollouts} total rollouts")
 
+#REMEMBER TO CHANGE THIS 
 def judge_inference_openrouter(
     eval_conversations: list[list[dict]],
     judge_model: str,
