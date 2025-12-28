@@ -22,10 +22,10 @@ def run_question_inference(model, tokenizer, conversations, n_per_question, temp
 
     texts = [
         tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        for messages in conversations
+        for messages in (conversations)
     ]
     #I think this is where the error was coming from
-    completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=False)
+    completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=True)
     answers = []
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation
