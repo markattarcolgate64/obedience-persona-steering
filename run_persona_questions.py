@@ -62,8 +62,16 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_conversations = []
         neg_conversations = []
         
-
+        question_data = instruction_data["questions"]
         for question in extract:
+            question_obj = {
+                "question": question,
+                "pos_responses": [],
+                "neg_responses": [],
+                "pos_eval_scores": [],
+                "neg_eval_scores": []
+            }
+            question_data.append(question_obj)
             for _ in range(n_per_question):
                 #Build positive conversation
                 pos_conversations.append([
@@ -86,21 +94,12 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         print(extract[0])
         print("\n\n", "Len:",len(pos_responses[0]))
         for i in range(len(pos_responses)):
-            question_data = {
-                "question": question,
-                "pos_responses": [],
-                "neg_responses": [],
-                "pos_eval_scores": [],
-                "neg_eval_scores": []
-            }
-            question_data["neg_responses"] = neg_responses[i]
-            question_data["pos_responses"] = pos_responses[i]
-            instruction_data["questions"].append(question_data)
-
+            q_obj = question_data[i]
+            q_obj["neg_responses"] = neg_responses[i]
+            q_obj["pos_responses"] = pos_responses[i]
         
         print("Len q data before", len(question_data))
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
-        question_data = instruction_data["questions"]
         #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
         #Calculate the obedience scores using a judge model 
@@ -111,15 +110,16 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         score_idx = 0 
         for q in range(len(question_data)):
             q_obj = question_data[q]
-                    
-            
-            # q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
-            # q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
+            q_obj["pos_eval_scores"] = [pos_eval_scores[j] for j in range(score_idx, score_idx+n_per_question)]
+            q_obj["neg_eval_scores"] = [neg_eval_scores[i] for i in range(score_idx, score_idx+n_per_question)]
         
-
-        print(question_data[0])
-
+        #print(question_data[0])
         break
+    #     all_data.append(question_data)
+
+    # print(all_data)
+    # print("\n\n")
+    # print("All data", len(all_data), )
 
     return all_data
 
