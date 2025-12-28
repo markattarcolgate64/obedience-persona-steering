@@ -93,19 +93,32 @@ def run_extract(model_name: str, judge_model: str, n_per_question: int):
         #should be 5 length, very big 
         for i in range(len(pos_responses)):
             #each 5 is question
-            question_data = instruction_data["questions"][i]
-            question_data["neg_responses"] = neg_responses[i]
-            question_data["pos_responses"] = pos_responses[i]
+            i_question_data = instruction_data["questions"][i]
+            i_question_data["neg_responses"] = neg_responses[i]
+            i_question_data["pos_responses"] = pos_responses[i]
         
         #this is painful and we need to separate out this extract data from the eval loop because we need to save it 
         print("Question data example\n\n",instruction_data["questions"][0])
+
+        question_data = instruction_data["questions"]
+
+        pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
+
+        print("Eval messages\n", pos_eval_mssgs[0])
         break
-        return question_data
 
+    return all_data
 
-def run_eval():
-    pass
-
+def batch_eval_messages(question_data, eval_prompt):
+    pos_eval_messages = []
+    neg_eval_messages = [] 
+    for que in question_data:
+        question, pos_responses, neg_responses = que["question"], que["pos_responses"], que["neg_responses"]
+        q_eval_prompt = eval_prompt.replace("{{question}}", question)
+        pos_eval_messages.append([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", p_resp)} for p_resp in pos_responses])
+        neg_eval_messages.append([{"role": "user", "content": q_eval_prompt.replace(f"{{answer}}", n_resp)} for n_resp in neg_responses])
+    
+    return pos_eval_messages, neg_eval_messages
         #Should see an array of arrays [[q_resp_1],[q_resp_2]] with n = 1
 
 
