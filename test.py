@@ -13,12 +13,7 @@ def main():
     # e = [[{"role":"user", "content":"hello world"}], [{"role":"user", "content":"hello underworld"}]]
     # resp = judge_inference_openrouter_batch(e, "anthropic/claude-haiku-4.5")
     # print(resp[0].choices[0].message.content)
-    idx = e.find(THINK_TOKEN)
-    print(idx, len(e))
-    print(e[idx+len(THINK_TOKEN):])
-
-    with open(WRITE_FP, 'w') as f:
-        json.dump(e, f, indent=2)
+    print()
 
 
 if __name__ == "__main__":
