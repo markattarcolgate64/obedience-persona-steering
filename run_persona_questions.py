@@ -158,10 +158,10 @@ def judge_inference_openrouter_batch(
 
 def main():
     from model_utils import TEST_QWEN_MODEL
+    #Command line arguments for the input file (questions-path) and output file (output-path)
     parser = argparse.ArgumentParser(description="Run persona vector extraction inference")
     parser.add_argument("--output-path", "-o", default=WRITE_FP, type=str, help="Output file path")
     parser.add_argument("--questions-path", "-q", default=QUESTIONS_TEST_FP, type=str, help="Output file path")
-
     args = parser.parse_args()
     question_data = run_extract(
         model_name=TEST_QWEN_MODEL,
