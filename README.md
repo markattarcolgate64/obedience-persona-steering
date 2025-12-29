@@ -2,6 +2,8 @@
 
 Author: Mark Attar
 
+INCOMPLETE README WILL ADD MORE 
+
 ## Overview
 
 This project takes the concept of Anthropic's persona vectors research and applies the new trait of obedience along with a newer CoT model, Qwen 3 4B-Thinking. The goal is to assess a model's ability to stray from obedience/corrigibility to humans and then steer that back on track using a persona vector.
