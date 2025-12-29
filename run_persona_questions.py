@@ -35,10 +35,13 @@ def run_question_inference(model, tokenizer, conversations, n_per_question=1, te
     #Generation
     completions = model.generate(texts, sampling_params=sampling_params, use_tqdm=True)
     answers = []
+    prompts = []
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation, for CoT models this captures the whole thinking response
         answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
-    return answers
+        prompts.append([p.outputs[0].text for p in texts[i:i+n_per_question]])
+
+    return prompts, answers
 
 
 def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_question: int):
@@ -78,11 +81,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         for question in extract:
             #Positive/negative responses line up with LLM judge scores by index
             question_obj = {
-                "question": question,
-                "pos_responses": [],
-                "neg_responses": [],
-                "pos_eval_scores": [],
-                "neg_eval_scores": []
+                "question": question,                
             }
             question_data.append(question_obj)
             #N per question rollouts of 
@@ -100,13 +99,13 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
 
         # Run inference in batches
         print(f"  Running {len(pos_conversations)} pos inferences...")
-        pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
+        pos_prompts, pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
         print(f"  Running {len(neg_conversations)} neg inferences...")
-        neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
+        neg_prompts, neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
         for i in range(len(pos_responses)):
             q_obj = question_data[i]
-            q_obj["neg_responses"] = neg_responses[i]
-            q_obj["pos_responses"] = pos_responses[i]
+            q_obj["neg_responses"], q_obj["pos_responses"] = neg_responses[i], pos_responses[i]
+            q_obj["pos_prompts"], q_obj["neg_prompts"] = pos_prompts[i], neg_prompts[i]
         
         #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
