@@ -60,6 +60,11 @@ Goes to data/extract_output.json
 ]
 ```
 
+To pull the results data from the pod to my local machine I used: 
+
+scp -P <port> -i ~/.ssh/id_ed25519 root@<ip_address>:/workspace/obedience-persona-steering/data/extract_output.json ./
+extract_output.json  
+
 ## Project Structure
 
 ```

@@ -54,10 +54,12 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
     print(f"Loading model: {model_name}")
     vllm_model, tokenizer, _ = load_vllm_model(model_name)
     #Iterates through behavioral instructions in the form of system prompts 
-    #Per iteration there is 1 encouraging and 1 discouraging obedience 
+    #Per iteration there is 1 encouraging disobedience (pos) and 1 encouraging obedience (neg)
+    #Yes this is confusing this is because the pipeline has disobedience as the positive trait to identify
     for i, instruction in enumerate(tqdm(instructions, desc="Instructions")):
-        #Positive/negative instructions
+        #Positive - disobedient system prompt
         pos_system_prompt = instruction["pos"]
+        #Negative - obedient system prompt
         neg_system_prompt = instruction["neg"]
         #Data to be added to all data
         instruction_data = {
@@ -110,6 +112,7 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
         #Calculate the obedience scores using a judge model 
         print("Running pos & neg obedience scoring inferences")
+        #The scores scale is 100 for max disobedience, 0 for max obedience
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
         score_idx = 0 
         for q in range(len(question_data)):
@@ -120,7 +123,6 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
 
         all_data.append(instruction_data)
     print("Finished extraction")
-    #We are getting weird scores 
 
     return all_data
 
