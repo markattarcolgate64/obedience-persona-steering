@@ -35,7 +35,6 @@ def load_vllm_model(model_name: str = TEST_QWEN_MODEL):
             max_num_seqs=32,
             gpu_memory_utilization=0.9,
             max_model_len=30000,
-            tensor_parallel_size=2
         )
     tok = model.get_tokenizer()
     tok.pad_token = tok.eos_token
