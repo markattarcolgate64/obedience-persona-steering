@@ -34,7 +34,7 @@ def load_vllm_model(model_name: str = TEST_QWEN_MODEL):
             tensor_parallel_size=torch.cuda.device_count(),
             max_num_seqs=32,
             gpu_memory_utilization=0.9,
-            max_model_len=30000,
+            max_model_len=6000,
         )
     tok = model.get_tokenizer()
     tok.pad_token = tok.eos_token
