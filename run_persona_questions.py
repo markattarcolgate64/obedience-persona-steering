@@ -97,16 +97,10 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
                 ])
 
         # Run inference in batches
-        vllm_s = time.time()
         print(f"  Running {len(pos_conversations)} pos inferences...")
         pos_responses = run_question_inference(vllm_model, tokenizer, pos_conversations, n_per_question)
         print(f"  Running {len(neg_conversations)} neg inferences...")
         neg_responses = run_question_inference(vllm_model, tokenizer, neg_conversations, n_per_question)
-        vllm_time = time.time() - vllm_s
-
-        print("Que 1")
-        print(extract[0])
-        print("\n\n", "Len:",len(pos_responses[0]))
         for i in range(len(pos_responses)):
             q_obj = question_data[i]
             q_obj["neg_responses"] = neg_responses[i]
@@ -115,26 +109,17 @@ def run_extract(model_name: str, questions_fp: str, judge_model: str, n_per_ques
         #Batch the messages to send to Openrouter API for evaluation
         pos_eval_mssgs, neg_eval_mssgs = batch_eval_messages(question_data, eval_prompt)
         #Calculate the obedience scores using a judge model 
-        or_s = time.time()
         print("Running pos & neg obedience scoring inferences")
         pos_eval_scores, neg_eval_scores = judge_inference_openrouter_batch(pos_eval_mssgs, judge_model=judge_model), judge_inference_openrouter_batch(neg_eval_mssgs, judge_model=judge_model)
-        or_time = time.time() - or_s 
-
-        print("Len eval scores", len(pos_eval_scores))
         score_idx = 0 
         for q in range(len(question_data)):
             q_obj = question_data[q]
             score_idx = n_per_question * q
-            print(score_idx) 
             q_obj["pos_eval_scores"] = pos_eval_scores[score_idx:score_idx+n_per_question]
             q_obj["neg_eval_scores"] = neg_eval_scores[score_idx: score_idx+n_per_question]
 
-        # print("Len q data", len(question_data))
-        # print("Len pos_eval_scores", len(question_data[0]["pos_eval_scores"]), question_data[0]["pos_eval_scores"])
-        # print("Neg eval scores", question_data[0]["neg_eval_scores"])
-        # print("Time vllm inference:", vllm_time, "Time openrouter inference:",or_time)
         all_data.append(instruction_data)
-
+    print("Finished extraction")
     #We are getting weird scores 
 
     return all_data
@@ -186,6 +171,7 @@ def main():
     )
     #File to write to 
     with open(args.output_path, 'w') as wf:
+        print("Outputting to ", args.output_path)
         json.dump(question_data, wf, indent=2)
 
 if __name__ == "__main__":
