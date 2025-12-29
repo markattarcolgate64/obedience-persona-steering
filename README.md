@@ -13,7 +13,7 @@ The code in this codebase is only concerned with eliciting a number of obedient 
 
 ## Setup
 
-Project must be run with GPUs I used Runpod.
+Project must be run with GPUs I used Runpod. Models are run locally via vllm.  
 create_questions_dataset.ipynb is also here for reference but you don't need to run it.
 
 First you must enter Openrouter API key and Hugging Face token for .env file AND on your Hugging Face account get access to the Qwen/Qwen3-4B-Thinking-2507 model which is very simple it just requires filling out a form and takes a few minutes to an hour to process.
