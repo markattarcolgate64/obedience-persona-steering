@@ -39,7 +39,7 @@ def run_question_inference(model, tokenizer, conversations, n_per_question=1, te
     for i in range(0, len(completions), n_per_question):
         #extract every n_per_conversation, for CoT models this captures the whole thinking response
         answers.append([c.outputs[0].text for c in completions[i:i+n_per_question]])
-        prompts.append([p.outputs[0].text for p in texts[i:i+n_per_question]])
+        prompts.append([p for p in texts[i:i+n_per_question]])
 
     return prompts, answers
 
